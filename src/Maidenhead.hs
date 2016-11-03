@@ -23,7 +23,7 @@ charToFloat ((min,max),x) acc = (acc + fromIntegral (ord (toUpper x) - ord min))
 
 -- |Converts Maidenhead coordinate string to latitude and longitude in
 -- WGS84 degrees.
-maidenheadToWgs84 :: String -> (Double, Double)
+maidenheadToWgs84 :: (Fractional a) => String -> (a, a)
 maidenheadToWgs84 s = ((latRaw-0.5)*180, (lonRaw-0.5)*360)
   where [lonRaw, latRaw] = map toPos $ transpose $ chunksOf 2 s
-        toPos = foldr charToFloat 0.5 . zip alphabet -- 0.5 gets the centre of a square
+        toPos = foldr charToFloat (1/2) . zip alphabet -- 0.5 gets the centre of a square
