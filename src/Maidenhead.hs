@@ -17,13 +17,19 @@ chunksOf n xs = case splitAt n xs of
 -- |Takes (min,max) of given character position, the character
 -- x, and the accumulator. Converts the given position to a value
 -- between 0 and 1 and combines it with the accumulator.
-charToFloat :: Fractional a => ((Char, Char), Char) -> a -> a
-charToFloat ((min,max),x) acc = (acc + fromIntegral (ord (toUpper x) - ord min)) / scale
-  where scale = fromIntegral (ord max - ord min + 1)
+charToFloat :: Fractional a => ((Char, Char), Char) -> Maybe a -> Maybe a
+charToFloat _ Nothing = Nothing
+charToFloat ((min,max),x') (Just acc)
+  | x < min || x > max = Nothing
+  | otherwise = Just $ (acc + fromIntegral (ord x - ord min)) / scale
+  where scale = fromIntegral $ ord max - ord min + 1
+        x = toUpper x'
 
 -- |Converts Maidenhead coordinate string to latitude and longitude in
 -- WGS84 degrees.
-maidenheadToWgs84 :: (Fractional a) => String -> (a, a)
-maidenheadToWgs84 s = ((latRaw-0.5)*180, (lonRaw-0.5)*360)
-  where [lonRaw, latRaw] = map toPos $ transpose $ chunksOf 2 s
-        toPos = foldr charToFloat (1/2) . zip alphabet -- 0.5 gets the centre of a square
+maidenheadToWgs84 :: (Fractional a) => String -> Maybe (a, a)
+maidenheadToWgs84 s = latLon <$> mapM toPos (transpose $ chunksOf 2 s)
+   where
+     latLon [lonRaw, latRaw] = ((latRaw-0.5)*180, (lonRaw-0.5)*360)
+     toPos = foldr charToFloat middle . zip alphabet
+     middle = Just (1/2) -- 0.5 gets the centre of a square
