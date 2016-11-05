@@ -3,6 +3,7 @@ module Maidenhead ( maidenheadToWgs84
                   , maidenheadMaxDistance
                   ) where
 
+import Control.Monad (zipWithM)
 import Data.Char (toUpper, ord)
 import Data.List (transpose)
 
@@ -37,8 +38,11 @@ charToFloat ((min,max),x') (Just acc)
 -- argument which can be [0.5,0.5] if you want to find the centre of
 -- the square.
 maidenheadToFrac :: Fractional a => [a] -> String -> Maybe [a]
-maidenheadToFrac point s = sequence $ zipWith toPos point (transpose $ chunksOf 2 s)
+maidenheadToFrac point s = zipWithM toPos point (transpose $ chunksOf 2 s) >>=
+                           longEnough
    where toPos middle = foldr charToFloat (Just middle) . zip alphabet
+         longEnough a@[_,_] = Just a
+         longEnough _ = Nothing
 
 -- |Converts Maidenhead coordinate string to latitude and longitude in
 -- WGS84 degrees. Gets the center of the square
