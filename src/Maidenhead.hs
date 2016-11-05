@@ -1,6 +1,6 @@
 module Maidenhead ( maidenheadToWgs84
                   , maidenheadDistance
-                  , maidenheadDistances
+                  , maidenheadMaxDistance
                   ) where
 
 import Data.Char (toUpper, ord)
@@ -59,24 +59,29 @@ distance (φ1, λ1) (φ2, λ2) = d * asin (sqrt (sin² ((φ2-φ1)/2) + cos φ1 *
         sin² = (**2) . sin
 
 -- |Calculates distance in kilometres between two points in Maidenhead
+-- measured from the centres of both squares.
 maidenheadDistance :: Floating a => String -> String -> Maybe a
 maidenheadDistance a b = distance <$>
                          maidenheadToRad centre a <*>
                          maidenheadToRad centre b
 
 -- |Calculates distance in kilometres between two points in Maidenhead
--- format. Returns minimum and maximum distance. Please note this
--- calculates distances using the square corners, so if one of the
--- coordinates is an enclave like "KP22UF99UM" and "KP22UF", it
--- calculates the minimum distance incorrectly.
-maidenheadDistances :: RealFloat t => String -> String -> Maybe (t, t)
-maidenheadDistances a b = do
-  list <- sequence [ distance <$>
-                     maidenheadToRad [x1,y1] a <*>
-                     maidenheadToRad [x2,y2] b
-                   | x1 <- [0,1]
-                   , y1 <- [0,1]
-                   , x2 <- [0,1]
-                   , y2 <- [0,1]
-                   ]
-  return (minimum list, maximum list)
+-- format. Returns maximum distance possible between those
+-- squares. Because the station may be in any point of the square, we
+-- calculate the worst possible distance by measuring the maximum
+-- distance between any of the corners of both squares.
+maidenheadMaxDistance :: RealFloat t => String -> String -> Maybe t
+maidenheadMaxDistance a b = maximum <$> sequence
+                            [ distance <$>
+                              maidenheadToRad [x1,y1] a <*>
+                              maidenheadToRad [x2,y2] b
+                            | x1 <- [0,1]
+                            , y1 <- [0,1]
+                            , x2 <- [0,1]
+                            , y2 <- [0,1]
+                            ]
+
+-- TODO maidenheadMinDistance is not yet implemented. It is not needed
+-- in my application and it is non-trivial to implement because there
+-- may be enclaves and small box near the edge of a bigger box. Feel
+-- free to implement.
