@@ -1,7 +1,6 @@
 module Maidenhead ( maidenheadToWgs84
-                  , maidenheadToWgs84rad
-                  , distance
                   , maidenheadDistance
+                  , maidenheadDistances
                   ) where
 
 import Data.Char (toUpper, ord)
@@ -18,6 +17,10 @@ chunksOf n xs = case splitAt n xs of
   (a,[]) -> [a]
   (a,b)  -> a : chunksOf n b
 
+-- |Centre of a square.
+centre :: Fractional a => [a]
+centre = [1/2,1/2]
+
 -- |Takes (min,max) of given character position, the character
 -- x, and the accumulator. Converts the given position to a value
 -- between 0 and 1 and combines it with the accumulator.
@@ -29,24 +32,24 @@ charToFloat ((min,max),x') (Just acc)
   where scale = fromIntegral $ ord max - ord min + 1
         x = toUpper x'
 
--- |Converts Maidenhead coordinate string to latitude and longitude in
--- WGS84 (in semicircles i.e. 180°)
-maidenheadToWgs84sc :: (Fractional a) => String -> Maybe (a, a)
-maidenheadToWgs84sc s = latLon <$> mapM toPos (transpose $ chunksOf 2 s)
-   where
-     latLon [lonRaw, latRaw] = ((latRaw-0.5), (lonRaw-0.5)*2)
-     toPos = foldr charToFloat middle . zip alphabet
-     middle = Just (1/2) -- 0.5 gets the centre of a square
+-- |Converts Maidenhead coordinate string to latitude and longitude
+-- starting from lower left corner of the map. Takes point as a an
+-- argument which can be [0.5,0.5] if you want to find the centre of
+-- the square.
+maidenheadToFrac :: Fractional a => [a] -> String -> Maybe [a]
+maidenheadToFrac point s = sequence $ zipWith toPos point (transpose $ chunksOf 2 s)
+   where toPos middle = foldr charToFloat (Just middle) . zip alphabet
 
 -- |Converts Maidenhead coordinate string to latitude and longitude in
--- WGS84 degrees.
+-- WGS84 degrees. Gets the center of the square
 maidenheadToWgs84 :: Fractional t => String -> Maybe (t, t)
-maidenheadToWgs84 s = (\(a,b) -> (180*a,180*b)) <$> maidenheadToWgs84sc s
+maidenheadToWgs84 s = (\[a,b] -> (180*(b-0.5),360*(a-0.5))) <$> maidenheadToFrac centre s
 
 -- |Converts Maidenhead coordinate string to latitude and longitude in
--- WGS84 radians.
-maidenheadToWgs84rad :: Floating t => String -> Maybe (t, t)
-maidenheadToWgs84rad s = (\(a,b) -> (pi*a,pi*b)) <$> maidenheadToWgs84sc s
+-- WGS84 radians. Longitude is not normalized to Greenwich because
+-- distance and bearing algorithms don't need normalization.
+maidenheadToRad :: Floating t => [t] -> String -> Maybe (t, t)
+maidenheadToRad point s = (\[a,b] -> (pi*(b-0.5),2*pi*a)) <$> maidenheadToFrac point s
 
 -- |Calculate distance in kilometres between two points (in
 -- radians) using Haversine formula
@@ -58,5 +61,22 @@ distance (φ1, λ1) (φ2, λ2) = d * asin (sqrt (sin² ((φ2-φ1)/2) + cos φ1 *
 -- |Calculates distance in kilometres between two points in Maidenhead
 maidenheadDistance :: Floating a => String -> String -> Maybe a
 maidenheadDistance a b = distance <$>
-                         maidenheadToWgs84rad a <*>
-                         maidenheadToWgs84rad b
+                         maidenheadToRad centre a <*>
+                         maidenheadToRad centre b
+
+-- |Calculates distance in kilometres between two points in Maidenhead
+-- format. Returns minimum and maximum distance. Please note this
+-- calculates distances using the square corners, so if one of the
+-- coordinates is an enclave like "KP22UF99UM" and "KP22UF", it
+-- calculates the minimum distance incorrectly.
+maidenheadDistances :: RealFloat t => String -> String -> Maybe (t, t)
+maidenheadDistances a b = do
+  list <- sequence [ distance <$>
+                     maidenheadToRad [x1,y1] a <*>
+                     maidenheadToRad [x2,y2] b
+                   | x1 <- [0,1]
+                   , y1 <- [0,1]
+                   , x2 <- [0,1]
+                   , y2 <- [0,1]
+                   ]
+  return (minimum list, maximum list)
