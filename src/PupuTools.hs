@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards, OverloadedStrings #-}
 module PupuTools where
 
 import PupuCsv
@@ -26,7 +26,9 @@ links xs = [ PupuLink a ss
 
 -- |Produce link pairs ready for speed testing etc.
 linksToIps :: [PupuLink] -> [(Text,Text,Text)]
-linksToIps xs = [ (linkName, ipv4 (ap x), ipv4 y)
-                | x <- xs, y <- stations x
-                , let linkName = T.concat [name (ap x), "-", name y]
+linksToIps xs = [ (linkName, ipv4 a, ipv4 b)
+                | PupuLink{..} <- xs
+                , station <- stations
+                , (a,b) <- [(ap,station),(station,ap)] -- Test both directions
+                , let linkName = T.concat [name a, "-", name b]
                 ]
