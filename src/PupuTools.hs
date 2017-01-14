@@ -22,11 +22,14 @@ links xs = [ PupuLink{..}
            , not $ null stations
            ]
 
--- |Produce link pairs ready for speed testing etc.
-linksToIps :: [PupuLink] -> [(Text,Text,Text)]
-linksToIps xs = [ (linkName, ipv4 a, ipv4 b)
-                | PupuLink{..} <- xs
-                , station <- stations
-                , (a,b) <- [(ap,station),(station,ap)] -- Test both directions
-                , let linkName = T.concat [name a, "-", name b]
-                ]
+-- |Produce link pairs for speed testing. Returns array of arrays
+-- where the outer array can be processed simultaneously but inner
+-- arrays must be done sequentially because they share the same AP and
+-- share the available bandwidth.
+speedTestIps :: [PupuLink] -> [[(Text, Text)]]
+speedTestIps xs = [ [ (ipv4 a, ipv4 b)
+                    | station <- stations
+                    , (a,b) <- [(ap,station),(station,ap)] -- Test both directions
+                    ]
+                  | PupuLink{..} <- xs
+                  ]
