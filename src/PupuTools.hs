@@ -3,7 +3,6 @@ module PupuTools where
 
 import PupuCsv
 import Data.Maybe
-import Data.List
 import Data.Text (Text)
 import qualified Data.Text as T
 
@@ -14,15 +13,14 @@ data PupuLink = PupuLink { ap       :: PupuHost
 -- |Group rows to ap-station lists and drop hosts which have no
 -- AP binding.
 links :: [PupuHost] -> [PupuLink]
-links xs = [ PupuLink a ss
-           | a <- aps
-           , let ss = [ s
-                      | s <- rest
-                      , connects s == Just (name a)
-                      ]
-           , not $ null ss
+links xs = [ PupuLink{..}
+           | ap <- filter (isNothing.connects) xs
+           , let stations = [ s
+                            | s <- xs
+                            , connects s == Just (name ap)
+                            ]
+           , not $ null stations
            ]
-  where (rest,aps) = partition (isJust.connects) xs
 
 -- |Produce link pairs ready for speed testing etc.
 linksToIps :: [PupuLink] -> [(Text,Text,Text)]
