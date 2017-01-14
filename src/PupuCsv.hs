@@ -8,18 +8,18 @@ import Control.Applicative
 import Data.Text (Text)
 import Data.Vector (toList)
 
-data PupuRow = PupuRow { name      :: !Text
-                       , lan       :: !Text
-                       , ipv4      :: !Text
-                         -- skip ipMissing
-                         -- skip ipv4Old
-                       , connects  :: !(Maybe Text)
-                       , standard  :: !Text
-                       , power     :: !(Maybe Int)
-                       } deriving (Show)
+data PupuHost = PupuHost { name      :: !Text
+                         , lan       :: !Text
+                         , ipv4      :: !Text
+                           -- skip ipMissing
+                           -- skip ipv4Old
+                         , connects  :: !(Maybe Text)
+                         , standard  :: !Text
+                         , power     :: !(Maybe Int)
+                         } deriving (Show)
 
-instance FromRecord PupuRow where
-    parseRecord v = PupuRow <$>
+instance FromRecord PupuHost where
+    parseRecord v = PupuHost <$>
                     v .! 0 <*>
                     v .! 1 <*>
                     v .! 2 <*>
@@ -29,5 +29,5 @@ instance FromRecord PupuRow where
       where apfy (Just "AP") = Nothing
             apfy x           = x
 
-readPupuCsv :: FilePath -> IO [PupuRow]
+readPupuCsv :: FilePath -> IO [PupuHost]
 readPupuCsv f = either error toList . decode HasHeader <$> B.readFile f

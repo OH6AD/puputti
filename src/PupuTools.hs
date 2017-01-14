@@ -7,13 +7,13 @@ import Data.List
 import Data.Text (Text)
 import qualified Data.Text as T
 
-data PupuLink = PupuLink { ap       :: PupuRow
-                         , stations :: [PupuRow]
+data PupuLink = PupuLink { ap       :: PupuHost
+                         , stations :: [PupuHost]
                          } deriving (Show)
 
 -- |Group rows to ap-station lists and drop hosts which have no
 -- AP binding.
-links :: [PupuRow] -> [PupuLink]
+links :: [PupuHost] -> [PupuLink]
 links xs = [ PupuLink a ss
            | a <- aps
            , let ss = [ s
