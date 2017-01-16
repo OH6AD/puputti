@@ -5,6 +5,7 @@ import PupuCsv
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.List
 
 data PupuLink = PupuLink { ap       :: PupuHost
                          , stations :: [PupuHost]
@@ -26,10 +27,13 @@ links xs = [ PupuLink{..}
 -- where the outer array can be processed simultaneously but inner
 -- arrays must be done sequentially because they share the same AP and
 -- share the available bandwidth.
-speedTestIps :: [PupuLink] -> [[(Text, Text)]]
-speedTestIps xs = [ [ (ipv4 a, ipv4 b)
-                    | station <- stations
-                    , (a,b) <- [(ap,station),(station,ap)] -- Test both directions
-                    ]
-                  | PupuLink{..} <- xs
-                  ]
+toTestPairs :: [PupuLink] -> [[(PupuHost, PupuHost)]]
+toTestPairs xs = [ [ pair
+                   | station <- stations
+                   , pair <- [(ap,station),(station,ap)] -- Test both directions
+                   ]
+                 | PupuLink{..} <- xs
+                 ]
+
+-- |Shorthand for searching by given field
+findBy f hosts x = fromJust $ find (\y -> f y == T.pack x) hosts
