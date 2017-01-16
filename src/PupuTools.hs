@@ -1,11 +1,10 @@
 {-# LANGUAGE RecordWildCards, OverloadedStrings #-}
 module PupuTools where
 
-import PupuCsv
 import Data.Maybe
 import Data.Text (Text)
-import qualified Data.Text as T
-import Data.List
+
+import PupuHosts
 
 data PupuLink = PupuLink { ap       :: PupuHost
                          , stations :: [PupuHost]
@@ -34,6 +33,3 @@ toTestPairs xs = [ [ pair
                    ]
                  | PupuLink{..} <- xs
                  ]
-
--- |Shorthand for searching by given field
-findBy f hosts x = fromJust $ find (\y -> f y == T.pack x) hosts

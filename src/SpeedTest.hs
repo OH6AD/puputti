@@ -1,12 +1,13 @@
 module SpeedTest where
 
+import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import PupuCsv
-import System.Process
 import System.Environment
+import System.Process
 import Text.Parsec
 import Text.Parsec.String
-import qualified Data.Map.Strict as M
+
+import PupuHosts
 
 runTest a b = do
   pw <- getEnv "SSHPASS"

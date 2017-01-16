@@ -1,6 +1,7 @@
--- |Reads Pupu CSV files produced by Google Spreadsheets
+-- |Host file definition and parser for Pupu CSV files produced by
+-- Google Spreadsheets.
 {-# LANGUAGE OverloadedStrings #-}
-module PupuCsv where
+module PupuHosts where
 
 import Data.ByteString.Lazy as B (readFile)
 import Data.Csv
