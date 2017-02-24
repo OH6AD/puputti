@@ -1,14 +1,14 @@
+{-# LANGUAGE OverloadedStrings #-}
 module SpeedTest where
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import System.Environment
 import System.Process
-import Text.Parsec
-import Text.Parsec.String
+import qualified Data.Attoparsec.ByteString.Char8 as A
+import Data.ByteString.Char8 (ByteString, pack)
 
 import PupuHosts
-
 runTest a b = do
   pw <- getEnv "SSHPASS"
   out <- readProcess
@@ -18,17 +18,17 @@ runTest a b = do
     ,"duration=20"
     ]
     ""
-  either (fail.show) return $ parse keyVals "" out
+  either (fail.show) return $ A.parseOnly keyVals $ pack out
 
-keyVal :: Parser (String, String)
+keyVal :: A.Parser (ByteString, ByteString)
 keyVal = do
-  many $ oneOf " \t"
-  k <- many $ noneOf ":\r\n"
-  string ": "
-  v <- many $ noneOf "\r\n"
+  A.skipWhile $ A.inClass " \t"
+  k <- A.takeWhile $ A.notInClass ":\r\n"
+  A.string ": "
+  v <- A.takeWhile $ A.notInClass "\r\n"
   return (k,v)
 
-keyVals :: Parser (M.Map String String)
+keyVals :: A.Parser (M.Map ByteString ByteString)
 keyVals = do
-  allPairs <- keyVal `sepEndBy` many endOfLine
+  allPairs <- keyVal `A.sepBy` A.many' A.endOfLine
   return $ M.fromList allPairs -- Keep only recent pairs

@@ -1,3 +1,4 @@
+<!-- -*- mode: markdown; -*- -->
 # puputti
 Radio link fleet management tool
 
