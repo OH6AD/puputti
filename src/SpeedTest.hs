@@ -4,21 +4,20 @@ module SpeedTest where
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import System.Environment
-import System.Process
 import qualified Data.Attoparsec.ByteString.Char8 as A
-import Data.ByteString.Char8 (ByteString, pack)
+import Data.ByteString.Char8 (ByteString)
 
 import PupuHosts
+import RunAndParse
+
 runTest a b = do
   pw <- getEnv "SSHPASS"
-  out <- readProcess
-    "sshpass"
-    ["-e", "ssh", "test@" ++ T.unpack (ipv4 a), "/tool", "bandwidth-test"
-    ,"address=" ++ T.unpack (ipv4 b), "user=test", "password=" ++ pw
-    ,"duration=20"
-    ]
-    ""
-  either (fail.show) return $ A.parseOnly keyVals $ pack out
+  out <- runAndParse keyVals "sshpass"
+         ["-e", "ssh", "test@" ++ T.unpack (ipv4 a), "/tool", "bandwidth-test"
+         ,"address=" ++ T.unpack (ipv4 b), "user=test", "password=" ++ pw
+         ,"duration=20"
+         ]
+  either (fail.show) return out
 
 keyVal :: A.Parser (ByteString, ByteString)
 keyVal = do
