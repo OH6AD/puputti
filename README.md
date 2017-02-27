@@ -4,7 +4,7 @@ Radio link fleet management tool
 
 Requirements:
 
-	sudo apt install ghc libghc-cassava-dev libghc-parsec3-dev
+	sudo apt install ghc libghc-cassava-dev libghc-attoparsec-dev libghc-persistent-template-dev
 
 If you want to perform speed tests over radio link, you need `sshpass`
 as well. Running speedtest in MikroTik RouterOS requires password in
