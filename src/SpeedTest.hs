@@ -27,6 +27,10 @@ runTest a b = do
          ]
   either (fail.show) return out
 
+runAndParseDebug p cmd args = do
+  putStrLn $ intercalate " " (cmd:args)
+  runAndParse p cmd args
+
 key :: ByteString -> Parser ()
 key k = do
   skipWhile $ inClass " \t"
